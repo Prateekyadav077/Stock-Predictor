@@ -39,6 +39,7 @@ st.markdown("""
         .title-logo {
             display: flex;
             align-items: center;
+            margin-bottom: 20px;
         }
         .title-logo img {
             margin-right: 15px;
@@ -47,10 +48,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ----------------- APP HEADER -----------------
+# ----------------- HEADER WITH LOGO -----------------
 st.markdown("""
 <div class="title-logo">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg" width="80">
     <h1>Nike Stock Predictor</h1>
 </div>
 """, unsafe_allow_html=True)
@@ -62,10 +63,16 @@ st.markdown(f"**Ticker:** {ticker}")
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    time_steps = st.number_input("⏳ Time steps (sequence length)", min_value=10, max_value=200, value=60,
-                                 help="Number of previous days model will use to predict the next day")
-    future_days = st.number_input("📈 Days to predict (business days)", min_value=1, max_value=90, value=30,
-                                  help="How many business days into the future to predict")
+    time_steps = st.number_input(
+        "⏳ Time steps (sequence length)", 
+        min_value=10, max_value=200, value=60,
+        help="Number of previous days model will use to predict the next day"
+    )
+    future_days = st.number_input(
+        "📈 Days to predict (business days)", 
+        min_value=1, max_value=90, value=30,
+        help="How many business days into the future to predict"
+    )
 
 # ----------------- TABS -----------------
 tab1, tab2 = st.tabs(["Historical Prediction", "Future Prediction"])
@@ -90,7 +97,6 @@ with tab1:
             ax.legend(facecolor="#222222")
             st.pyplot(fig)
 
-            # Calculate RMSE
             mse = ((actual - predicted) ** 2).mean()
             rmse = mse ** 0.5
             st.markdown(f"**RMSE on historical data:** <span style='color:#E62020;'>{rmse:.4f}</span>", unsafe_allow_html=True)
@@ -111,7 +117,6 @@ with tab2:
             last_seq = X[-1]
             future_pred = predict_future(model, last_seq, n_steps=int(future_days), scaler=scaler)
 
-            # Generate future dates
             last_date = df.index[-1]
             future_dates = []
             current = last_date
@@ -120,7 +125,6 @@ with tab2:
                 if current.weekday() < 5:
                     future_dates.append(current)
 
-            # Plot
             fig, ax = plt.subplots(figsize=(12, 6))
             ax.plot(df.index, df["Adj Close"], label="Actual", color="#FFFFFF")
             ax.plot(pd.to_datetime(future_dates), future_pred.flatten(), linestyle='--', label="Future Prediction", color="#E62020")
@@ -133,7 +137,6 @@ with tab2:
             ax.legend(facecolor="#222222")
             st.pyplot(fig)
 
-            # Display dataframe
             out_df = pd.DataFrame({"Date": future_dates, "Predicted_Close": future_pred.flatten()})
             out_df["Date"] = pd.to_datetime(out_df["Date"]).dt.date
             st.subheader("📊 Future Predictions")
