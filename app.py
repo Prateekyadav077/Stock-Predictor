@@ -20,7 +20,8 @@ st.set_page_config(page_title="Nike Stock Predictor", layout="wide")
 
 # ----------------- GPT CLIENT -----------------
 # Make sure you set your OPENAI_API_KEY in environment variables
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("sk-...F2IA
+"))
 
 def ask_gpt(question: str) -> str:
     """Send question to GPT and return answer."""
