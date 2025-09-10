@@ -1,7 +1,6 @@
 """
 Streamlit app for Nike Stock Predictor — LSTM demo
 Uses preprocessed/trained data and saved model for predictions.
-Includes AI chatbot for financial explanations.
 Run with: streamlit run app.py
 """
 
@@ -13,27 +12,7 @@ import os
 
 from lstm_model import create_sequences, predict_future, load_saved, get_test_predictions
 
-# For GPT integration
-from openai import OpenAI
-
 st.set_page_config(page_title="Nike Stock Predictor", layout="wide")
-
-# ----------------- GPT CLIENT -----------------
-# Make sure you set your OPENAI_API_KEY in environment variables
-client = OpenAI(api_key=os.getenv("sk-...F2IA"))
-
-def ask_gpt(question: str) -> str:
-    """Send question to GPT and return answer."""
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": question}],
-            temperature=0.7
-        )
-        answer = response.choices[0].message.content
-        return answer
-    except Exception as e:
-        return f"Error: {e}"
 
 # ----------------- APP TITLE -----------------
 st.title("Nike Stock Predictor")
@@ -102,21 +81,8 @@ if st.button("Predict Future with Saved Model"):
         st.subheader("Future Predictions")
         st.dataframe(out_df)
 
-# ----------------- AI CHATBOT -----------------
-st.markdown("---")
-st.subheader("Ask the AI about Nike Stock or Financial Terms")
-
-question = st.text_area("Enter your question here (e.g., 'What does RSI mean?' or 'Explain NKE stock trend')")
-if st.button("Ask AI"):
-    if question.strip() == "":
-        st.warning("Please enter a question.")
-    else:
-        with st.spinner("Thinking..."):
-            answer = ask_gpt(question)
-        st.markdown(f"**Answer:** {answer}")
-
 st.markdown("---")
 st.markdown(
     "**Notes:** This app uses preprocessed NKE data only. The LSTM model is loaded from the `models/` folder. "
-    "Future predictions are based on the saved model. Use the AI chat to understand financial indicators, trends, or stock info."
+    "Future predictions are based on the saved model."
 )
