@@ -18,7 +18,12 @@ def load_cleaned(ticker: str, data_dir: str = "data") -> pd.DataFrame:
     path = os.path.join(data_dir, f"{ticker}_cleaned.csv")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Cleaned data not found at {path}. Run data_prep_analysis.py first.")
-    return pd.read_csv(path, index_col=0, parse_dates=True)
+    # Explicitly parse index as date
+    df = pd.read_csv(path, index_col=0, parse_dates=True)
+    # Ensure 'Adj Close' is numeric
+    df['Adj Close'] = pd.to_numeric(df['Adj Close'], errors='coerce')
+    df = df.dropna(subset=['Adj Close'])
+    return df
 
 def create_sequences(values: np.ndarray, time_steps: int = 60):
     X, y = [], []
@@ -39,7 +44,8 @@ def build_model(time_steps: int = 60, units: int = 50, dropout: float = 0.2):
 
 def train_and_save(ticker: str, time_steps: int = 60, epochs: int = 30, batch_size: int = 32):
     df = load_cleaned(ticker)
-    prices = df["Adj Close"].values.reshape(-1, 1)
+    # Select only numeric column for scaling
+    prices = df[['Adj Close']].values  # 2D array for scaler
 
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled = scaler.fit_transform(prices)
