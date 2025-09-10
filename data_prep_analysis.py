@@ -25,17 +25,22 @@ def compute_rsi(series: pd.Series, window: int = 14) -> pd.Series:
     return rsi
 
 def fetch_and_clean(ticker: str, start: str, end: str) -> pd.DataFrame:
-    # Set auto_adjust=False to keep 'Adj Close' column
     df = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=False)
     if df.empty:
         raise ValueError(f"No data returned for {ticker} between {start} and {end}")
-    df = df[["Open", "High", "Low", "Close", "Adj Close", "Volume"]].copy()
+    
+    # If multi-level columns, flatten
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [' '.join(col).strip() for col in df.columns.values]
+
+    # Keep only the standard columns
+    keep_cols = ['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
+    df = df[[c for c in keep_cols if c in df.columns]].copy()
+    
     df.index = pd.to_datetime(df.index)
     df = df.sort_index()
-
-    # Fill small gaps
     df = df.ffill().bfill()
-
+    
     # Feature engineering
     df["Returns"] = df["Adj Close"].pct_change()
     df["LogRet"] = np.log(df["Adj Close"]) - np.log(df["Adj Close"].shift(1))
@@ -55,14 +60,10 @@ def summary_stats(df: pd.DataFrame) -> pd.DataFrame:
 def save_clean_csv(df: pd.DataFrame, ticker: str, out_dir: str = "data") -> str:
     os.makedirs(out_dir, exist_ok=True)
     
-    # Reset index if Ticker is part of index
-    if isinstance(df.index, pd.MultiIndex):
-        df = df.reset_index(level=0, drop=True)  # remove 'Ticker' from index
-
     # Ensure 'Adj Close' is numeric
     df['Adj Close'] = pd.to_numeric(df['Adj Close'], errors='coerce')
     
-    # Drop rows where 'Adj Close' is NaN
+    # Drop rows with NaN in 'Adj Close'
     df = df.dropna(subset=['Adj Close'])
     
     filename = os.path.join(out_dir, f"{ticker}_cleaned.csv")
