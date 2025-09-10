@@ -55,8 +55,12 @@ def summary_stats(df: pd.DataFrame) -> pd.DataFrame:
 def save_clean_csv(df: pd.DataFrame, ticker: str, out_dir: str = "data") -> str:
     os.makedirs(out_dir, exist_ok=True)
     
-    # Keep only numeric columns that LSTM will use
-    numeric_cols = ["Adj Close"]  # Only keep what the model needs
+    # Reset index if multi-index
+    if isinstance(df.index, pd.MultiIndex):
+        df = df.reset_index(level=0, drop=True)  # drop Ticker from index
+
+    # Keep only numeric column for LSTM
+    numeric_cols = ["Adj Close"]
     df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
     df = df.dropna(subset=numeric_cols)
     
