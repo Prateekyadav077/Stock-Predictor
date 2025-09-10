@@ -75,7 +75,7 @@ st.markdown("""
 # ----------------- HEADER -----------------
 st.markdown("""
 <div class="title-logo">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/Nike_logo_white.svg">
     <h1>Nike Stock Predictor</h1>
 </div>
 """, unsafe_allow_html=True)
@@ -167,6 +167,7 @@ with tab2:
             st.markdown("### 📊 Future Predictions Table")
             st.dataframe(out_df, use_container_width=True)
 
+# ----------------- FOOTER -----------------
 st.markdown("---")
 with st.expander("ℹ️ Notes"):
     st.markdown("""
