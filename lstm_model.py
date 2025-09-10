@@ -15,14 +15,19 @@ MODEL_DIR = "models"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 def load_cleaned(ticker: str, data_dir: str = "data") -> pd.DataFrame:
-    """Load cleaned CSV data and ensure 'Adj Close' is numeric."""
     path = os.path.join(data_dir, f"{ticker}_cleaned.csv")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Cleaned data not found at {path}. Run data_prep_analysis.py first.")
+    
+    # Load CSV
     df = pd.read_csv(path, index_col=0, parse_dates=True)
+
+    # Ensure 'Adj Close' is numeric, drop any rows with invalid values
     df['Adj Close'] = pd.to_numeric(df['Adj Close'], errors='coerce')
     df = df.dropna(subset=['Adj Close'])
+    
     return df
+
 
 def create_sequences(values: np.ndarray, time_steps: int = 60):
     X, y = [], []
