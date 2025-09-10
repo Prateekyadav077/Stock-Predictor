@@ -1,8 +1,8 @@
 import streamlit as st
 from datetime import date
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
+import plotly.graph_objects as go
 from lstm_model import create_sequences, predict_future, load_saved, get_test_predictions
 
 # ----------------- PAGE CONFIG -----------------
@@ -73,16 +73,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------- HEADER -----------------
-# ----------------- HEADER -----------------
-# ----------------- HEADER -----------------
 st.markdown("""
 <div class="title-logo">
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/512px-Logo_NIKE.svg.png" style="height:70px;">
     <h1>Nike Stock Predictor</h1>
 </div>
 """, unsafe_allow_html=True)
-
-
 
 ticker = "NKE"
 st.markdown(f"**Ticker:** `{ticker}`")
@@ -110,17 +106,31 @@ with tab1:
         except FileNotFoundError as e:
             st.error(f"{e}\nPlease run data_prep_analysis.py and train the model first.")
         else:
-            fig, ax = plt.subplots(figsize=(14, 7))
-            ax.plot(dates, actual, label="Actual", color="#FFFFFF", linewidth=2)
-            ax.plot(dates, predicted, linestyle="--", label="Predicted", color="#E62020", linewidth=2)
-            ax.set_facecolor("#0D0D0D")
-            ax.set_title(f"{ticker} — Trained vs Predicted Prices", color="#FFFFFF", fontsize=16)
-            ax.set_xlabel("Date", color="#FFFFFF")
-            ax.set_ylabel("Adjusted Close Price", color="#FFFFFF")
-            ax.tick_params(axis='x', colors='white')
-            ax.tick_params(axis='y', colors='white')
-            ax.legend(facecolor="#1A1A1A")
-            st.pyplot(fig)
+            fig = go.Figure()
+
+            fig.add_trace(go.Scatter(
+                x=dates, y=actual,
+                mode="lines",
+                name="Actual Price",
+                line=dict(color="white", width=2)
+            ))
+
+            fig.add_trace(go.Scatter(
+                x=dates, y=predicted,
+                mode="lines",
+                name="Predicted Price",
+                line=dict(color="red", width=2, dash="dash")
+            ))
+
+            fig.update_layout(
+                title=f"{ticker} — Trained vs Predicted Prices",
+                xaxis_title="Date",
+                yaxis_title="Adjusted Close Price",
+                template="plotly_dark",
+                legend=dict(bgcolor="rgba(0,0,0,0.6)")
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
 
             mse = ((actual - predicted) ** 2).mean()
             rmse = mse ** 0.5
@@ -151,20 +161,34 @@ with tab2:
                 if current.weekday() < 5:
                     future_dates.append(current)
 
-            # Plot chart
-            fig, ax = plt.subplots(figsize=(14, 7))
-            ax.plot(df.index, df["Adj Close"], label="Actual", color="#FFFFFF", linewidth=2)
-            ax.plot(pd.to_datetime(future_dates), future_pred.flatten(), linestyle='--',
-                    label="Future Prediction", color="#E62020", linewidth=2)
-            ax.set_facecolor("#0D0D0D")
-            ax.set_title(f"{ticker} — Actual vs Future Prediction", color="#FFFFFF", fontsize=16)
-            ax.set_xlabel("Date", color="#FFFFFF")
-            ax.set_ylabel("Adjusted Close Price", color="#FFFFFF")
-            ax.tick_params(axis='x', colors='white')
-            ax.tick_params(axis='y', colors='white')
-            ax.legend(facecolor="#1A1A1A")
-            st.pyplot(fig)
+            # Interactive Plotly chart
+            fig = go.Figure()
 
+            fig.add_trace(go.Scatter(
+                x=df.index, y=df["Adj Close"],
+                mode="lines",
+                name="Actual Price",
+                line=dict(color="white", width=2)
+            ))
+
+            fig.add_trace(go.Scatter(
+                x=pd.to_datetime(future_dates), y=future_pred.flatten(),
+                mode="lines",
+                name="Future Prediction",
+                line=dict(color="red", width=2, dash="dash")
+            ))
+
+            fig.update_layout(
+                title=f"{ticker} — Actual vs Future Prediction",
+                xaxis_title="Date",
+                yaxis_title="Adjusted Close Price",
+                template="plotly_dark",
+                legend=dict(bgcolor="rgba(0,0,0,0.6)")
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            # Prediction Table
             out_df = pd.DataFrame({"Date": future_dates, "Predicted_Close": future_pred.flatten()})
             out_df["Date"] = pd.to_datetime(out_df["Date"]).dt.date
 
