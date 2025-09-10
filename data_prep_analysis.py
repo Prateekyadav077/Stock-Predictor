@@ -55,18 +55,20 @@ def summary_stats(df: pd.DataFrame) -> pd.DataFrame:
 def save_clean_csv(df: pd.DataFrame, ticker: str, out_dir: str = "data") -> str:
     os.makedirs(out_dir, exist_ok=True)
     
-    # Reset index if multi-index
+    # Reset index if Ticker is part of index
     if isinstance(df.index, pd.MultiIndex):
-        df = df.reset_index(level=0, drop=True)  # drop Ticker from index
+        df = df.reset_index(level=0, drop=True)  # remove 'Ticker' from index
 
-    # Keep only numeric column for LSTM
-    numeric_cols = ["Adj Close"]
-    df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
-    df = df.dropna(subset=numeric_cols)
+    # Ensure 'Adj Close' is numeric
+    df['Adj Close'] = pd.to_numeric(df['Adj Close'], errors='coerce')
+    
+    # Drop rows where 'Adj Close' is NaN
+    df = df.dropna(subset=['Adj Close'])
     
     filename = os.path.join(out_dir, f"{ticker}_cleaned.csv")
     df.to_csv(filename)
     return filename
+
 
 
 def main():
