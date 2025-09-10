@@ -30,43 +30,43 @@ def fetch_and_clean(ticker: str, start: str, end: str) -> pd.DataFrame:
         raise ValueError(f"No data returned for {ticker} between {start} and {end}")
 
     print("Columns from yfinance:", df.columns)  # debug line
-    
-    # If multi-level columns, flatten
+
+    # Flatten MultiIndex if present
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = [' '.join(col).strip() for col in df.columns.values]
 
-    # Use a column that exists
-    if 'Adj Close' in df.columns:
-        adj_close_col = 'Adj Close'
-    elif 'Adj Close ' in df.columns:  # sometimes an extra space
-        adj_close_col = 'Adj Close '
-    else:
+    # Find the 'Adj Close' column dynamically
+    adj_close_col = None
+    for col in df.columns:
+        if 'Adj Close' in col:
+            adj_close_col = col
+            break
+    if adj_close_col is None:
         raise KeyError("Adjusted Close column not found in downloaded data!")
 
     # Keep only standard columns if they exist
     keep_cols = ['Open', 'High', 'Low', 'Close', adj_close_col, 'Volume']
     df = df[[c for c in keep_cols if c in df.columns]].copy()
-    
+
     df.index = pd.to_datetime(df.index)
     df = df.sort_index()
     df = df.ffill().bfill()
-    
+
     # Feature engineering
     df["Returns"] = df[adj_close_col].pct_change()
     df["LogRet"] = np.log(df[adj_close_col]) - np.log(df[adj_close_col].shift(1))
     df["MA_10"] = df[adj_close_col].rolling(window=10).mean()
     df["MA_50"] = df[adj_close_col].rolling(window=50).mean()
     df["STD_20"] = df[adj_close_col].rolling(window=20).std()
-    
-    # RSI function
     df["RSI_14"] = compute_rsi(df[adj_close_col], window=14)
 
     df = df.dropna()
-    
-    # rename adjusted close column to standard name for consistency
+
+    # Rename to standard name
     df.rename(columns={adj_close_col: "Adj Close"}, inplace=True)
 
     return df
+
 
 
 
