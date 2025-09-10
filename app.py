@@ -74,12 +74,14 @@ st.markdown("""
 
 # ----------------- HEADER -----------------
 # ----------------- HEADER -----------------
+# ----------------- HEADER -----------------
 st.markdown("""
 <div class="title-logo">
-    <img src="C:\Users\prate\OneDrive\Desktop/nikelogo.png" style="height:70px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/512px-Logo_NIKE.svg.png" style="height:70px;">
     <h1>Nike Stock Predictor</h1>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 ticker = "NKE"
