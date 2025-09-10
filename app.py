@@ -1,5 +1,7 @@
-"""Streamlit app for Nike Stock Predictor — LSTM demo
+"""
+Streamlit app for Nike Stock Predictor — LSTM demo
 Uses preprocessed/trained data and saved model for predictions.
+Includes AI chatbot for financial explanations.
 Run with: streamlit run app.py
 """
 
@@ -11,20 +13,38 @@ import os
 
 from lstm_model import create_sequences, predict_future, load_saved, get_test_predictions
 
+# For GPT integration
+from openai import OpenAI
+
 st.set_page_config(page_title="Nike Stock Predictor", layout="wide")
 
-# Title
-st.title("Nike Stock Predictor")
+# ----------------- GPT CLIENT -----------------
+# Make sure you set your OPENAI_API_KEY in environment variables
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Fixed ticker
+def ask_gpt(question: str) -> str:
+    """Send question to GPT and return answer."""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": question}],
+            temperature=0.7
+        )
+        answer = response.choices[0].message.content
+        return answer
+    except Exception as e:
+        return f"Error: {e}"
+
+# ----------------- APP TITLE -----------------
+st.title("Nike Stock Predictor")
 ticker = "NKE"
 st.markdown(f"**Ticker:** {ticker}")
 
-# User inputs
+# ----------------- USER INPUTS -----------------
 time_steps = st.number_input("Time steps (sequence length)", min_value=10, max_value=200, value=60)
 future_days = st.number_input("Days to predict (business days)", min_value=1, max_value=90, value=30)
 
-# Load model and show historical trained vs predicted
+# ----------------- HISTORICAL PREDICTION -----------------
 if st.button("Show Trained vs Predicted Chart"):
     try:
         dates, actual, predicted = get_test_predictions(ticker, time_steps=time_steps)
@@ -40,7 +60,12 @@ if st.button("Show Trained vs Predicted Chart"):
         ax.legend()
         st.pyplot(fig)
 
-# Future predictions
+        # Calculate simple accuracy metrics
+        mse = ((actual - predicted) ** 2).mean()
+        rmse = mse ** 0.5
+        st.markdown(f"**RMSE on historical data:** {rmse:.4f}")
+
+# ----------------- FUTURE PREDICTIONS -----------------
 if st.button("Predict Future with Saved Model"):
     try:
         model, scaler = load_saved(ticker)
@@ -77,5 +102,21 @@ if st.button("Predict Future with Saved Model"):
         st.subheader("Future Predictions")
         st.dataframe(out_df)
 
+# ----------------- AI CHATBOT -----------------
 st.markdown("---")
-st.markdown("**Notes:** This app uses preprocessed NKE data only. The LSTM model is loaded from the `models/` folder. Future predictions are based on the saved model and adjusted close prices.")
+st.subheader("Ask the AI about Nike Stock or Financial Terms")
+
+question = st.text_area("Enter your question here (e.g., 'What does RSI mean?' or 'Explain NKE stock trend')")
+if st.button("Ask AI"):
+    if question.strip() == "":
+        st.warning("Please enter a question.")
+    else:
+        with st.spinner("Thinking..."):
+            answer = ask_gpt(question)
+        st.markdown(f"**Answer:** {answer}")
+
+st.markdown("---")
+st.markdown(
+    "**Notes:** This app uses preprocessed NKE data only. The LSTM model is loaded from the `models/` folder. "
+    "Future predictions are based on the saved model. Use the AI chat to understand financial indicators, trends, or stock info."
+)
