@@ -25,7 +25,8 @@ def compute_rsi(series: pd.Series, window: int = 14) -> pd.Series:
     return rsi
 
 def fetch_and_clean(ticker: str, start: str, end: str) -> pd.DataFrame:
-    df = yf.download(ticker, start=start, end=end, progress=False)
+    # Set auto_adjust=False to keep 'Adj Close' column
+    df = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=False)
     if df.empty:
         raise ValueError(f"No data returned for {ticker} between {start} and {end}")
     df = df[["Open", "High", "Low", "Close", "Adj Close", "Volume"]].copy()
@@ -45,6 +46,7 @@ def fetch_and_clean(ticker: str, start: str, end: str) -> pd.DataFrame:
 
     df = df.dropna()
     return df
+
 
 def summary_stats(df: pd.DataFrame) -> pd.DataFrame:
     stats = df[["Adj Close", "Returns", "LogRet"]].describe()
