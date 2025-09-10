@@ -54,9 +54,16 @@ def summary_stats(df: pd.DataFrame) -> pd.DataFrame:
 
 def save_clean_csv(df: pd.DataFrame, ticker: str, out_dir: str = "data") -> str:
     os.makedirs(out_dir, exist_ok=True)
+    
+    # Keep only numeric columns that LSTM will use
+    numeric_cols = ["Adj Close"]  # Only keep what the model needs
+    df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
+    df = df.dropna(subset=numeric_cols)
+    
     filename = os.path.join(out_dir, f"{ticker}_cleaned.csv")
     df.to_csv(filename)
     return filename
+
 
 def main():
     parser = argparse.ArgumentParser()
